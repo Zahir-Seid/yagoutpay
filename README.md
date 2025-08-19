@@ -1,4 +1,4 @@
-# Project Name
+# YagoutPay Challenge 1
 
 ## Overview
 This project integrates a Vue 3 frontend with a Rust backend to process payments via YagoutPay.
