@@ -111,10 +111,8 @@ const handleCheckout = async () => {
                                     class="h-24 border-2 border-primary-500 rounded-lg overflow-hidden transition-transform hover:scale-105"
                                 >
                                     <img
-                                        src="https://images.unsplash.com/photo-1523275335684-37898b6baf30"
-                                        alt="Smart Watch"
+                                        src="https://imgs.search.brave.com/J2_GewSYaLe5b0ifUOV7kVC4mgmcpntzwraZEvlP9_c/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9zczcu/dnp3LmNvbS9pcy9p/bWFnZS9WZXJpem9u/V2lyZWxlc3MvYXBw/bGUtaXBob25lLTE1/LXByby1tYXgtMjU2/Z2ItbmF0dXJhbC10/aXRhbml1bS1tdTY4/M2xsLWEtYT9oZWk9/MjUwJmJnYz1mNmY2/ZjY"
                                         class="w-full h-full object-cover"
-                                        keywords="smart watch, front view"
                                     />
                                 </div>
                                 <div
@@ -141,10 +139,8 @@ const handleCheckout = async () => {
                                     class="h-24 border-2 border-transparent rounded-lg overflow-hidden hover:border-primary-500 transition-all hover:scale-105"
                                 >
                                     <img
-                                        src="https://images.unsplash.com/photo-1579586337278-3befd40fd17a"
-                                        alt="Smart Watch features"
+                                        src="https://imgs.search.brave.com/SstrsEOCtUBCnx4N6qVpLWr9FvDm-z6rq8s-XhBvEGc/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9jZG4u/bW9zLmNtcy5mdXR1/cmVjZG4ubmV0L2V2/OFRmZnN6RzdMenRy/Rm5CNVRxc2ouanBn"
                                         class="w-full h-full object-cover"
-                                        keywords="smart watch, features"
                                     />
                                 </div>
                             </div>
@@ -296,19 +292,18 @@ const handleCheckout = async () => {
                         </div>
                         <div class="p-6">
                             <p class="text-gray-700 mb-4">
-                                The TechFit Pro X7 Smart Watch is our most advanced wearable yet. Designed for fitness
-                                enthusiasts and tech lovers alike, it combines cutting-edge health monitoring with smart
-                                features in a sleek, durable design.
+                                The iPhone 15 Pro Max is Apple’s flagship smartphone, combining cutting-edge performance with
+                                a sleek, durable design. It’s perfect for tech enthusiasts who demand speed, style, and innovation.
                             </p>
                             <p class="text-neutral-700 mb-4">
-                                The stunning 6.7-inch Super Retina XDR display with ProMotion technology delivers
-                                incredibly fluid scrolling, amazing video playback, and responsive gaming. The always-on
-                                display lets you see vital information at a glance.
+                                The stunning 6.7-inch Super Retina XDR display with ProMotion technology delivers incredibly
+                                fluid scrolling, vivid video playback, and responsive gaming. The always-on display keeps your
+                                essential information visible at a glance.
                             </p>
                             <p class="text-gray-700">
-                                Built for an active lifestyle, the Pro X7 is water-resistant up to 50 meters and
-                                includes 20+ sport modes to track your favorite activities with precision. The
-                                long-lasting battery ensures you stay connected for up to 7 days on a single charge.
+                                Built for an active lifestyle, the iPhone 15 Pro Max features advanced durability with Ceramic
+                                Shield, water and dust resistance, and a powerful A17 Pro chip for unmatched performance.
+                                Enjoy long battery life and next-level photography with the pro camera system.
                             </p>
                         </div>
                     </div>
@@ -319,7 +314,7 @@ const handleCheckout = async () => {
                         <div class="bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
                             <div class="h-48 overflow-hidden">
                                 <img
-                                    src="https://images.unsplash.com/photo-1546435577-59baefee1e2c"
+                                    src="https://imgs.search.brave.com/31XkM9bKmOCZp56J1PA08q2lRliQX3tfw68wADBbC6E/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pLmlu/c2lkZXIuY29tLzY2/YmEyOTJjNWRhNDA2/Mzk3YmY0ZmY1Zj93/aWR0aD03MDA"
                                     alt="Related product 1"
                                     class="w-full h-full object-cover hover:scale-105 transition-transform"
                                     keywords="tech products, gadgets, electronics"
@@ -347,7 +342,7 @@ const handleCheckout = async () => {
                                 />
                             </div>
                             <div class="p-4">
-                                <h3 class="font-bold mb-2">Apple Watch Series 9</h3>
+                                <h3 class="font-bold mb-2">Iphone Xs</h3>
                                 <div class="flex justify-between items-center">
                                     <span class="font-bold">$399.99</span>
                                     <button
@@ -361,7 +356,7 @@ const handleCheckout = async () => {
                         <div class="bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
                             <div class="h-48 overflow-hidden">
                                 <img
-                                    src="https://images.unsplash.com/photo-1575936123452-b67833db7644"
+                                    src="https://imgs.search.brave.com/bs4TvKd2aAnY0eQgmvONkodPsUu_Dm2gLNRX0EoCYJA/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly93d3cu/ZXNydGVjaC5jb20v/Y2RuL3Nob3AvZmls/ZXMvMTVXLUNhci1D/aGFyZ2VyLXdpdGgt/TWFnU2FmZS1Dcnlv/Qm9vc3QtQzAxLVpU/MDEuanBnP3Y9MTc0/MjIwNTQ3NSZ3aWR0/aD0xMTAw"
                                     alt="Related product 3"
                                     class="w-full h-full object-cover hover:scale-105 transition-transform"
                                     keywords="tech products, gadgets, electronics"
@@ -382,7 +377,7 @@ const handleCheckout = async () => {
                         <div class="bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
                             <div class="h-48 overflow-hidden">
                                 <img
-                                    src="https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2"
+                                    src="https://imgs.search.brave.com/MaLsOfwnTHkzEAIpBp2_VLoCQaXwO5gAxz074srq7jw/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pNS53/YWxtYXJ0aW1hZ2Vz/LmNvbS9zZW8vMjAy/NC1BcHBsZS0xMy1p/bmNoLWlQYWQtQWly/LU0yLUJ1aWx0LWZv/ci1BcHBsZS1JbnRl/bGxpZ2VuY2UtV2kt/RmktMTI4R0ItQmx1/ZV8xNTEyNjEyYi0z/ZjgxLTQ2NjEtOWI1/YS1iNmUzMDUwMWZm/OTkuMmNhZmYzNzBi/MzRiMmE5NWNkZTUy/NTA5ZTAyZjY4Yjku/anBlZz9vZG5IZWln/aHQ9NTczJm9kbldp/ZHRoPTU3MyZvZG5C/Zz1GRkZGRkY"
                                     alt="Related product 4"
                                     class="w-full h-full object-cover hover:scale-105 transition-transform"
                                     keywords="tech products, gadgets, electronics"

@@ -38,7 +38,7 @@ fn decode_base64(key: &str) -> Vec<u8> {
     general_purpose::STANDARD.decode(key.trim()).expect("Invalid base64 key")
 }
 
-/// Format amount to match Python's logic: integer if whole, else two decimals
+/// Format amount : integer if whole, else two decimals
 fn format_amount(amount: f64) -> String {
     if amount.fract() == 0.0 {
         format!("{:.0}", amount)
@@ -47,7 +47,7 @@ fn format_amount(amount: f64) -> String {
     }
 }
 
-/// Generate encrypted merchant_request exactly like Python
+/// Generate encrypted merchant_request
 fn generate_merchant_request(
     me_id: &str,
     payload: &PaymentRequest,
@@ -85,7 +85,7 @@ fn generate_merchant_request(
     encrypt_aes256(&all_sections, key_bytes, iv)
 }
 
-/// Generate encrypted SHA-256 hash exactly like Python
+/// Generate encrypted SHA-256 hash
 fn generate_encrypted_hash(
     me_id: &str,
     order_number: &str,
