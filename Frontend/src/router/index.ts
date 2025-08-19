@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Checkout from '@/pages/checkout.vue'
 import Home from '@/pages/index.vue'
+import Success from '@/pages/success.vue'
+import Failure from '@/pages/failure.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,9 +12,14 @@ const router = createRouter({
       component: Home
     },
     {
-      path: '/checkout',
-      name: 'checkout',
-      component: Checkout
+      path: '/success',
+      name: 'success',
+      component: Success
+    },
+    {
+      path: '/failure',
+      name: 'failure',
+      component: Failure
     }
   ],
 })

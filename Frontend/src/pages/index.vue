@@ -1,5 +1,95 @@
+<script setup lang="ts">
+import { ref } from 'vue'
+
+interface PaymentFormData {
+  order_number: string
+  amount: number
+  success_url: string
+  failure_url: string
+  cust_name: string
+  email_id: string
+  mobile_no: string
+}
+
+interface PaymentResponse {
+  post_url: string
+  me_id: string
+  merchant_request: string
+  hash: string
+}
+
+const isCheckoutLoading = ref(false)
+
+// Test data matching the YagoutPay documentation example
+const paymentFormData: PaymentFormData = {
+  order_number: '49340',  // Using the exact example from docs
+  amount: 1,  // Using the exact example from docs
+  success_url: 'http://127.0.0.1:5173/success',
+  failure_url: 'http://127.0.0.1:5173/failure',
+  cust_name: 'John Doe',
+  email_id: 'john@example.com',
+  mobile_no: '0912345678'
+}
+
+const handleCheckout = async () => {
+  try {
+    isCheckoutLoading.value = true
+    console.log('Payment form data being sent:', paymentFormData)
+
+    const response = await fetch('http://127.0.0.1:8000/create_payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(paymentFormData),
+    })
+
+    if (!response.ok) throw new Error(await response.text())
+
+    const data: PaymentResponse = await response.json()
+    console.log('Payment response received:', data)
+    console.log('Hash value:', data.hash)
+    console.log('Hash length:', data.hash.length)
+
+    // Create and submit the payment form to YagoutPay
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = data.post_url
+    form.style.display = 'none'
+
+    // Add the required fields exactly as per YagoutPay documentation
+    ;[
+      { name: 'me_id', value: data.me_id },
+      { name: 'merchant_request', value: data.merchant_request },
+      { name: 'hash', value: data.hash },
+    ].forEach(f => {
+      const input = document.createElement('input')
+      input.type = 'hidden'
+      input.name = f.name
+      input.value = f.value
+      form.appendChild(input)
+    })
+
+    document.body.appendChild(form)
+
+    console.log('Form ready to submit:', form)
+    console.log('Form inputs:', Array.from(form.elements).map(e => ({ name: e.name, value: e.value })))
+
+    form.submit() // leave commented until ready
+  } catch (err: any) {
+    console.error('Checkout failed:', err)
+    alert(`Checkout failed: ${err.message}`)
+  } finally {
+    isCheckoutLoading.value = false
+  }
+}
+
+</script>
+
+
+
+
 <template
-    ><div id="webcrumbs">
+    >
+<div id="webcrumbs">
         <div class="bg-neutral-50 min-h-screen">
             <div class="container mx-auto px-4 py-8">
                 <div class="flex flex-col lg:flex-row gap-8">
@@ -158,12 +248,22 @@
                                         <span class="material-symbols-outlined mr-2">shopping_cart</span> Add to Cart
                                     </button>
                                 </div>
-                                <router-link
-                                    to="/checkout"
-                                    class="w-full mt-4 bg-primary-800 text-white font-bold py-5 px-6 rounded-lg hover:bg-primary-900 transition-transform hover:scale-[1.02] flex items-center justify-center"
+                                <button
+                                @click="handleCheckout"
+                                :disabled="isCheckoutLoading"
+                                class="w-full mt-4 bg-primary-800 text-white font-bold py-5 px-6 rounded-lg hover:bg-primary-900 transition-transform hover:scale-[1.02] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
+                                <span v-if="isCheckoutLoading" class="inline-flex items-center">
+                                    <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Processing...
+                                </span>
+                                <span v-else>
                                     <span class="material-symbols-outlined mr-2">payments</span> Checkout Now
-                                </router-link>
+                                </span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -306,3 +406,9 @@
         </div>
     </div></template
 >
+
+
+
+<style scoped>
+/* Add any custom styles here */
+</style>

@@ -1,37 +1,23 @@
-use actix_web::{post, web, App, HttpResponse, HttpServer, Responder, Result};
-use aes::Aes256;
-use aes::cipher::{KeyIvInit, BlockEncryptMut};
-use cbc::Encryptor;
-use block_padding::Pkcs7;
+use actix_cors::Cors;
+use actix_web::{post, web, App, HttpServer, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
+use openssl::symm::{encrypt, Cipher};
 use sha2::{Sha256, Digest};
 use base64::{engine::general_purpose, Engine as _};
-use utoipa::OpenApi;
-use utoipa::ToSchema;
-use utoipa_swagger_ui::SwaggerUi;
+use hex;
+use dotenv::dotenv;
+use std::env;
 
 
-type Aes256CbcEnc = Encryptor<Aes256>;
-
-#[derive(Clone)]
-struct AppConfig {
-    merchant_id: String,
-    encryption_key: Vec<u8>,
-    post_url: String,
-    iv: [u8; 16],
-}
-
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize)]
 struct PaymentRequest {
     order_number: String,
     amount: f64,
     success_url: String,
     failure_url: String,
-    email: String,
-    mobile_no: String,
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize)]
 struct PaymentResponse {
     post_url: String,
     me_id: String,
@@ -39,136 +25,140 @@ struct PaymentResponse {
     hash: String,
 }
 
-fn encrypt_aes_cbc(plaintext: &str, key: &[u8; 32], iv: &[u8; 16]) -> Vec<u8> {
-    let cipher = Aes256CbcEnc::new_from_slices(key, iv).expect("invalid key/iv length");
-
-    // create a mutable buffer from the plaintext
-    let mut buf = plaintext.as_bytes().to_vec();
-
-    // pad & encrypt in place
-    let ciphertext = cipher
-        .encrypt_padded_mut::<Pkcs7>(&mut buf, plaintext.len())
-        .expect("encryption failed");
-
-    // return as Vec<u8>
-    ciphertext.to_vec()
+/// AES-256-CBC encryption with PKCS7 padding (handled by OpenSSL), then Base64 encode
+fn encrypt_aes256(plaintext: &str, key: &[u8], iv: &[u8]) -> String {
+    let cipher = Cipher::aes_256_cbc();
+    let ciphertext = encrypt(cipher, key, Some(iv), plaintext.as_bytes())
+        .expect("Encryption failed");
+    general_purpose::STANDARD.encode(ciphertext)
 }
 
-fn aes_encrypt(plaintext: &str, key: &[u8], iv: &[u8]) -> String {
-    let mut key_array = [0u8; 32];
-    key_array.copy_from_slice(&key[..32]);
-
-    let mut iv_array = [0u8; 16];
-    iv_array.copy_from_slice(&iv[..16]);
-
-    let encrypted = encrypt_aes_cbc(plaintext, &key_array, &iv_array);
-    general_purpose::STANDARD.encode(&encrypted)
+/// Base64-decode key
+fn decode_base64(key: &str) -> Vec<u8> {
+    general_purpose::STANDARD.decode(key.trim()).expect("Invalid base64 key")
 }
 
-#[utoipa::path(
-    post,
-    path = "/create_payment",
-    request_body = PaymentRequest,
-    responses(
-        (status = 200, description = "Payment created successfully", body = PaymentResponse)
-    )
-)]
+/// Format amount to match Python's logic: integer if whole, else two decimals
+fn format_amount(amount: f64) -> String {
+    if amount.fract() == 0.0 {
+        format!("{:.0}", amount)
+    } else {
+        format!("{:.2}", amount)
+    }
+}
+
+/// Generate encrypted merchant_request exactly like Python
+fn generate_merchant_request(
+    me_id: &str,
+    payload: &PaymentRequest,
+    key_bytes: &[u8],
+    iv: &[u8],
+) -> String {
+    let amount_formatted = format_amount(payload.amount);
+
+    // Build each section 
+    let txn_details = format!(
+        "yagout|{}|{}|{}|ETH|ETB|SALE|{}|{}|WEB",
+        me_id, payload.order_number, amount_formatted, payload.success_url, payload.failure_url
+    );
+    let pg_details = "|||";
+    let card_details = "||||";
+    let cust_details = "||||Y"; 
+    let bill_details = "||||";
+    let ship_details = "||||||";
+    let item_details = "||";
+    let upi_details = "";
+    let other_details = "||||";
+
+    let all_sections = vec![
+        txn_details,
+        pg_details.to_string(),
+        card_details.to_string(),
+        cust_details.to_string(),
+        bill_details.to_string(),
+        ship_details.to_string(),
+        item_details.to_string(),
+        upi_details.to_string(),
+        other_details.to_string(),
+    ].join("~");
+
+    encrypt_aes256(&all_sections, key_bytes, iv)
+}
+
+/// Generate encrypted SHA-256 hash exactly like Python
+fn generate_encrypted_hash(
+    me_id: &str,
+    order_number: &str,
+    amount: f64,
+    key_bytes: &[u8],
+    iv: &[u8],
+) -> String {
+    let amount_str = format_amount(amount);
+    let hash_input = format!("{}~{}~{}~ETH~ETB", me_id, order_number, amount_str);
+    
+    let mut hasher = Sha256::new();
+    hasher.update(hash_input.as_bytes());
+    let hash_result = hasher.finalize();
+    let hash_hex = hex::encode(hash_result);
+
+    encrypt_aes256(&hash_hex, key_bytes, iv)
+}
+
 #[post("/create_payment")]
 async fn create_payment(
     payload: web::Json<PaymentRequest>,
-    config: web::Data<AppConfig>,
-) -> Result<impl Responder> {
-    let amount_formatted = format!("{:.2}", payload.amount);
+    data: web::Data<(String, Vec<u8>, [u8;16])>
+) -> impl Responder {
+    let (me_id, key_bytes, iv) = data.get_ref();
 
-    let txn_details = format!(
-        "yagout|{}|{}|{}|ETH|ETB|SALE|{}|{}|WEB",
-        config.merchant_id,
-        payload.order_number,
-        amount_formatted,
-        payload.success_url,
-        payload.failure_url
+    let merchant_request_encrypted = generate_merchant_request(me_id, &payload, key_bytes, iv);
+    let hash_encrypted = generate_encrypted_hash(
+        me_id,
+        &payload.order_number,
+        payload.amount,
+        key_bytes,
+        iv,
     );
-
-    let pg_details = "||";
-    let card_details = "||||";
-    let cust_details = format!("||||{}|{}|0|N", payload.email, payload.mobile_no);
-    let bill_details = "||||";
-    let ship_details = "|||||";
-    let item_details = "||";
-    let upi_details = "";
-    let other_details = "";
-
-    let all_values = format!(
-        "{}~{}~{}~{}~{}~{}~{}~{}~{}",
-        txn_details,
-        pg_details,
-        card_details,
-        cust_details,
-        bill_details,
-        ship_details,
-        item_details,
-        upi_details,
-        other_details
-    );
-
-    let merchant_request = aes_encrypt(&all_values, &config.encryption_key, &config.iv);
-
-    let hash_input = format!(
-        "{}~{}~{}~ETH~ETB",
-        config.merchant_id,
-        payload.order_number,
-        amount_formatted
-    );
-    let mut hasher = Sha256::new();
-    hasher.update(hash_input);
-    let hash_hex = format!("{:x}", hasher.finalize());
-    let hash_encrypted = aes_encrypt(&hash_hex, &config.encryption_key, &config.iv);
 
     let response = PaymentResponse {
-        post_url: config.post_url.clone(),
-        me_id: config.merchant_id.clone(),
-        merchant_request,
+        post_url: "https://uatcheckout.yagoutpay.com/ms-transaction-core-1-0/paymentRedirection/checksumGatewayPage".to_string(),
+        me_id: me_id.clone(),
+        merchant_request: merchant_request_encrypted,
         hash: hash_encrypted,
     };
 
-    Ok(HttpResponse::Ok().json(response))
+    HttpResponse::Ok().json(response)
 }
-
-#[derive(OpenApi)]
-#[openapi(
-    paths(create_payment),
-    components(schemas(PaymentRequest, PaymentResponse)),
-    tags(
-        (name = "payment", description = "Payment API")
-    )
-)]
-struct ApiDoc;
 
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let config = AppConfig {
-        merchant_id: "202508080001".to_string(),
-        encryption_key: general_purpose::STANDARD
-            .decode("IG3CNW5uNrUO2mU2htUOWb9rgXCF7XMAXmL63d7wNZo=")
-            .unwrap(),
-        post_url: "https://uatcheckout.yagoutpay.com/ms-transaction-core-1-0/paymentRedirection/checksumGatewayPage".to_string(),
-        iv: *b"0123456789abcdef",
-    };
+    dotenv().ok(); // Load .env
+    std::env::set_var("RUST_LOG", "debug");
+    env_logger::init();
 
-    let openapi = ApiDoc::openapi();
+    let me_id = env::var("MERCHANT_ID").expect("MERCHANT_ID must be set in .env");
+    let key_b64 = env::var("ENCRYPTION_KEY").expect("ENCRYPTION_KEY must be set in .env");
+
+    let key_bytes = decode_base64(&key_b64);
+    let iv: [u8; 16] = *b"0123456789abcdef";
+
+    let bind_address = "127.0.0.1:8000";
+    println!("Server running at http://{}/", bind_address);
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allow_any_origin()
+            .allow_any_method()
+            .allow_any_header()
+            .max_age(3600);
+
         App::new()
-            .app_data(web::Data::new(config.clone()))
+            .app_data(web::Data::new((me_id.clone(), key_bytes.clone(), iv)))
+            .wrap(cors)
             .service(create_payment)
-            .service(
-                SwaggerUi::new("/swagger-ui/{_:.*}")
-                    .url("/api-doc/openapi.json", openapi.clone())
-            )
     })
-    .bind("127.0.0.1:8000")?
+    .bind(bind_address)?
     .run()
     .await
 }
-
